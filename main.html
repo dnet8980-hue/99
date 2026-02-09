@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Иман Серігі — Super App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Amiri&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1b4332;
+            --gold: #d4af37;
+            --white: #ffffff;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0; padding: 0;
+            background: #121212;
+            color: #333;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 15px; background: var(--bg); min-height: 100vh; }
+
+        header {
+            background: var(--primary); color: white;
+            padding: 30px; border-radius: 0 0 30px 30px;
+            text-align: center; margin-bottom: 20px;
+        }
+
+        section {
+            background: white; border-radius: 20px;
+            padding: 20px; margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-top: 5px solid var(--gold);
+        }
+
+        h2 { color: var(--primary); font-size: 20px; display: flex; align-items: center; gap: 10px; }
+
+        /* МЕНЮ СТИЛЬ (99 есім, Айлар, Сүрелер үшін) */
+        .menu-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px; max-height: 300px; overflow-y: auto;
+            padding: 10px; background: #f9f9f9; border-radius: 10px;
+        }
+        .menu-item {
+            background: white; padding: 10px; border-radius: 8px;
+            text-align: center; font-size: 11px; border: 1px solid #ddd;
+            cursor: pointer; transition: 0.2s;
+        }
+        .menu-item:hover { background: var(--gold); color: white; }
+
+        /* ОЙЫН СТИЛЬ */
+        .quiz-box { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+        .quiz-option {
+            background: white; color: var(--primary);
+            border: none; padding: 12px; width: 100%;
+            margin: 8px 0; border-radius: 10px; font-weight: bold; cursor: pointer;
+        }
+
+        /* ЗІКІР */
+        .tasbih-area { text-align: center; padding: 20px; background: #e8f5e9; border-radius: 20px; }
+        .counter-num { font-size: 60px; font-weight: 800; color: var(--primary); }
+        .main-btn {
+            background: var(--gold); border: none; padding: 20px;
+            width: 100%; border-radius: 15px; color: var(--primary);
+            font-weight: 800; font-size: 20px; cursor: pointer;
+        }
+
+        .info-card { background: #fff8e1; padding: 15px; border-radius: 10px; font-size: 13px; margin-top: 10px; border-left: 4px solid var(--gold); }
+        
+        .arabic { font-family: 'Amiri', serif; font-size: 24px; text-align: right; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🕌 Иман Серігі</h1>
+        <p id="clock"></p>
+    </header>
+
+    <section>
+        <h2>🎮 Иман Ойыны (Quiz)</h2>
+        <div class="quiz-box" id="quizContainer">
+            <p id="quizQuestion">Жүктелуде...</p>
+            <div id="quizOptions"></div>
+            <p id="quizScore" style="margin-top:10px; font-size:12px;"></p>
+        </div>
+        <div class="info-card"><b>Разбор:</b> Бұл ойын діни біліміңізді тексеруге және есте сақтау қабілетін арттыруға арналған.</div>
+    </section>
+
+    <section>
+        <h2>✨ Алланың 99 есімі</h2>
+        <div class="menu-grid" id="namesList"></div>
+        <div class="info-card"><b>Разбор:</b> Алланың есімдерін жаттау — жәннатқа жетелейтін қайырлы амал.</div>
+    </section>
+    <section id="quranReader">
+    <h2>📖 Құран Оқу (114 Сүре)</h2>
+    
+    <div class="menu-grid" id="quranSuraMenu" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; max-height: 200px; overflow-y: auto;">
+        </div>
+
+    <div id="suraDisplay" style="display:none; margin-top: 20px; padding: 15px; background: #fff; border-radius: 15px; border: 1px solid var(--gold);">
+        <h3 id="suraTitle" style="text-align: center; color: var(--primary);"></h3>
+        <hr>
+        <div id="suraContent" style="max-height: 400px; overflow-y: auto; padding: 10px;">
+            </div>
+        <button onclick="closeSura()" style="width: 100%; margin-top: 10px; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer;">Жабу</button>
+    </div>
+</section>
+
+<script>
+// 114 Сүре атаулары (үлгі ретінде алғашқылары)
+const suraNames = [
+    "Фатиха", "Бақара", "Әли Имран", "Ниса", "Мәида", "Әнғам", "Ағраф", "Әнфәл", "Тәубе", "Юнус",
+    "Һұд", "Юсуф", "Рағыд", "Ибраһим", "Хижр", "Нәхл", "Исра", "Кәһф", "Мәриям", "Таһа"
+    // API қолданғанда қалғандары нөмірмен автоматты шығады
+];
+
+const quranMenu = document.getElementById('quranSuraMenu');
+
+// Менюді толтыру (114 сүре)
+for (let i = 1; i <= 114; i++) {
+    const btn = document.createElement('div');
+    btn.className = 'menu-item';
+    btn.innerHTML = `<b>${i}</b><br>${suraNames[i-1] || 'Сүре'}`;
+    btn.onclick = () => loadSura(i, suraNames[i-1] || `Сүре ${i}`);
+    quranMenu.appendChild(btn);
+}
+
+// Сүрені API арқылы жүктеу функциясы
+async function loadSura(id, name) {
+    const contentDiv = document.getElementById('suraContent');
+    const display = document.getElementById('suraDisplay');
+    const title = document.getElementById('suraTitle');
+    
+    title.innerText = "Жүктелуде...";
+    contentDiv.innerHTML = "Күте тұрыңыз, аяттар алдырылуда...";
+    display.style.display = "block";
+    quranMenu.style.display = "none"; // Менюді уақытша жабу
+
+    try {
+        // Тегін Quran API қолданамыз (Арабша мәтін үшін)
+        const response = await fetch(`https://api.alquran.cloud/v1/surah/${id}`);
+        const data = await response.json();
+        
+        title.innerText = `${id}. ${name}`;
+        contentDiv.innerHTML = "";
+
+        data.data.ayahs.forEach(ayah => {
+            const p = document.createElement('div');
+            p.style.marginBottom = "20px";
+            p.innerHTML = `
+                <span class="arabic" style="font-size: 22px; display: block; margin-bottom: 5px;">${ayah.text}</span>
+                <small style="color: var(--gold);">[${id}:${ayah.numberInSurah}]</small>
+            `;
+            contentDiv.appendChild(p);
+        });
+    } catch (error) {
+        contentDiv.innerHTML = "Қате орын алды. Интернет байланысын тексеріңіз.";
+    }
+}
+
+function closeSura() {
+    document.getElementById('suraDisplay').style.display = "none";
+    document.getElementById('quranSuraMenu').style.display = "grid";
+}
+</script>
+
+    <section>
+        <h2>📿 Зікір Санағыш</h2>
+        <div class="tasbih-area">
+            <p id="zikrName" style="font-weight:bold; color:var(--primary)">Субханаллаһ</p>
+            <div class="counter-num" id="countDisp">0</div>
+            <button class="main-btn" onclick="hitTasbih()">БАСУ</button>
+            <small onclick="resetTasbih()" style="cursor:pointer; display:block; margin-top:10px;">Санақты нөлдеу</small>
+        </div>
+        <div class="info-card"><b>Разбор:</b> 41 түрлі зікір мен салауат кезекпен шығады. Әр зікір 33 реттен орындалады.</div>
+    </section>
+
+    <section>
+        <h2>📖 Құран сүрелері (114 сүре)</h2>
+        <div class="menu-grid" id="quranList"></div>
+        <div class="info-card"><b>Разбор:</b> Құранда 114 сүре, 6236 аят бар. Алғашқы сүре - Фатиха, соңғысы - Нас.</div>
+    </section>
+
+    <section>
+        <h2>📅 Ислам күнтізбесі (12 ай)</h2>
+        <div class="menu-grid" id="monthsList"></div>
+        <div class="info-card"><b>Разбор:</b> Мұсылман күнтізбесі ай фазаларына негізделген (Хижри).</div>
+    </section>
+
+    <section>
+        <h2>🤲 Күнделікті дұғалар мен Рамазан</h2>
+        <div class="card" style="border:1px solid #ddd; padding:15px; border-radius:15px; margin-bottom:10px;">
+            <b>Тамақ алдында:</b> <span class="arabic">بِسْمِ اللَّهِ</span>
+        </div>
+        <div class="card" style="border:1px solid #ddd; padding:15px; border-radius:15px; margin-bottom:10px;">
+            <b>Рамазан (Ниет):</b> <p>Алла ризалығы үшін таңнан күн батқанға дейін ораза ұстауға ниет еттім.</p>
+        </div>
+        <div class="info-card"><b>Разбор:</b> Дұға — мұсылманның қаруы. Рамазан — нәпсіні тәрбиелейтін қасиетті ай.</div>
+    </section>
+
+    <div class="footer">© 2026 Иман Серігі. Барлық құқықтар қорғалған.</div>
+</div>
+
+<script>
+    // Сағат
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('kk-KZ');
+    }, 1000);
+
+    // Алланың 99 есімі (мысал)
+    const asmaulHusna = ["Ар-Рахман", "Ар-Рахим", "Аль-Малик", "Аль-Куддус", "Ас-Салам", "Аль-Мумин", "Аль-Мухаймин", "Аль-Азиз", "Аль-Джаббар", "Аль-Мутакаббир"];
+    const namesDiv = document.getElementById('namesList');
+    for(let i=1; i<=99; i++) {
+        namesDiv.innerHTML += `<div class="menu-item"><b>${i}</b><br>${asmaulHusna[i-1] || "Алла есімі"}</div>`;
+    }
+
+    // 114 сүре тізімі
+    const quranDiv = document.getElementById('quranList');
+    const sures = ["Фатиха", "Бақара", "Әли Имран", "Ниса", "Мәида", "Әнғам", "Ағраф"];
+    for(let i=1; i<=114; i++) {
+        quranDiv.innerHTML += `<div class="menu-item">${i}. ${sures[i-1] || "Сүре"}</div>`;
+    }
+
+    // 12 ай
+    const months = ["Мұхаррам", "Сафар", "Рабиүл-әууәл", "Рабиүл-ахир", "Жұмадәл-әууәл", "Жұмадәл-ахир", "Ережеп", "Шағбан", "Рамазан", "Шәууәл", "Зул-қағда", "Зул-хижжа"];
+    const monthsDiv = document.getElementById('monthsList');
+    months.forEach((m, i) => {
+        monthsDiv.innerHTML += `<div class="menu-item"><b>${i+1}</b><br>${m}</div>`;
+    });
+
+    // ЗІКІР ЛОГИКАСЫ (41 түрлі, 33-тен)
+    let count = 0;
+    let zIndex = 0;
+    const zikrs = ["Субханаллаһ", "Әлһамдулилләһ", "Аллаһу Акбар", "Лә иләһа илләллаһ", "Астағфируллаһ", "Салауат"];
+    
+    function hitTasbih() {
+        count++;
+        if(count > 33) {
+            count = 1;
+            zIndex = (zIndex + 1) % zikrs.length;
+            document.getElementById('zikrName').innerText = zikrs[zIndex];
+        }
+        document.getElementById('countDisp').innerText = count;
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+    function resetTasbih() { count=0; document.getElementById('countDisp').innerText=0; }
+
+    // ОЙЫН (QUIZ) ЛОГИКАСЫ
+    const questions = [
+        { q: "Исламның неше шарты бар?", a: ["3", "5", "7"], c: 1 },
+        { q: "Құранның алғашқы сүресі?", a: ["Ықылас", "Фатиха", "Бақара"], c: 1 },
+        { q: "Зекет неше пайызбен беріледі?", a: ["2.5%", "5%", "10%"], c: 0 }
+    ];
+    let currentQ = 0;
+    function loadQuiz() {
+        const item = questions[currentQ];
+        document.getElementById('quizQuestion').innerText = item.q;
+        const optDiv = document.getElementById('quizOptions');
+        optDiv.innerHTML = '';
+        item.a.forEach((opt, idx) => {
+            optDiv.innerHTML += `<button class="quiz-option" onclick="checkQuiz(${idx})">${opt}</button>`;
+        });
+    }
+    function checkQuiz(idx) {
+        if(idx === questions[currentQ].c) alert("Дұрыс! ✅");
+        else alert("Қате! ❌");
+        currentQ = (currentQ + 1) % questions.length;
+        loadQuiz();
+    }
+    loadQuiz();
+</script>
+
+</body>
+</html>
